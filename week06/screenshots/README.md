@@ -1,3 +1,3 @@
 just want to start by saying sorry about the file structure I cant get them to move without causing errors.
 
-My first screenshots are of the npm start in vs code to show what it is saying as of the time of writing this I can not get them to be added to the repo. the next two are showing off what is being shown in my postman when it is set to GET and Post 
+my scrrenshots start with the npm input and output, followed up by my first post with the input and outpt along with the GET function being used to make sure that it is saving my posts and their information, the next set of screenshots is all about the categories and using the post to make a category if you noice there are two I forgot to screenshot the first one so had to quickly make a second to have enough screenshots for the requirements
