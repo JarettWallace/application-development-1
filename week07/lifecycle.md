@@ -1,0 +1,5 @@
+1 VALID POST REQUEST TO /TASKS WITH CORRECT API KEY: an http post request is sent to /tasks with a valid api key, server receives the request and processes it, server runs a check if the api key is present and validates it, validation passes and the server returns a success response.
+
+2 POST /tasks without required field: http post request is sent with a valid api key in the headers but a missing field, server receives the request checks for the api key, it checks the request body and detects that a required fiel is missing/invalid, it doesnt create a task in the databse and should return an error response (should be a 400 error) it should also produce an error message expaling what is missing/invlaid.
+
+3 POST /tasks with missing API key: an request is sent to /tasks, body may have correct data api key is missing, server receives the request, checks for the api key notices the api key is missing, server stops processing, sever returns an authentication error (should be a 401) an error message that states that the api key is missing or invalid 
