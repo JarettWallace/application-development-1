@@ -1,3 +1,3 @@
 just want to start by saying sorry about the file structure I cant get them to move without causing errors.
 
-my scrrenshots start with the npm input and output, followed up by my first post with the input and outpt along with the GET function being used to make sure that it is saving my posts and their information, the next set of screenshots is all about the categories and using the post to make a category if you noice there are two I forgot to screenshot the first one so had to quickly make a second to have enough screenshots for the requirements
+please let me know if any screenshots need further explenation please let me know and ill be happy to explain but I feel their titles explain what they are. 
