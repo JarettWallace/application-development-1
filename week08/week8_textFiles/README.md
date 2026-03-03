@@ -1,5 +1,5 @@
 1: my project is based upon a blog and allows for users to make posts and for them to be documented and stored locally, seeing as this blog doesnt have a specific niche it can be used for any number of reasons making its target user anyone who wants to make apost, The main resources and posts and categories
-2: There is no node version mentioned, to install the npm you must run the command npm install this will install express and create a node_modules folder. To start the server you can simply run npm start. and there are no required environment variables
+2: There is no node version mentioned, to install the npm you must run the command npm install this will install express and create a node_modules folder. To start the server you can simply run npm start. and there are no required environment variables, also use the command npm run lint.
 3: | Method | Endpoint                 | Description                                |
 | ------ | ------------------------ | ------------------------------------------ |
 | GET    | /categories              | Retrieve all categories                    |
