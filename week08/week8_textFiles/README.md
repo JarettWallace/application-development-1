@@ -1,0 +1,2 @@
+1: my project is based upon a blog and allows for users to make posts and for them to be documented and stored locally, seeing as this blog doesnt have a specific niche it can be used for any number of reasons making its target user anyone who wants to make apost, The main resources and posts and categories
+2:
