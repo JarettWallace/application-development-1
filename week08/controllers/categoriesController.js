@@ -130,7 +130,7 @@ exports.getPostsByCategory = (req, res, next) => {
     );
 
     res.json(filteredPosts);
-  } catch (_err) {
+  } catch  {
     res.json([]); // if postsController doesn't exist yet
   }
 };
