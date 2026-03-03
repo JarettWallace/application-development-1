@@ -1,11 +1,12 @@
 {
-  "name": "week06",
+  "name": "week09",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,8 @@
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
   }
 }
