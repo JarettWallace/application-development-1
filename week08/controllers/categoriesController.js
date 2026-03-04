@@ -1,6 +1,63 @@
 let categories = [];
 let currentCategoryId = 1;
 
+/* ================== Helpers ================== */
+
+const createError = (message, status, code) => {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+  return error;
+};
+
+const getCategoryOrThrow = (id) => {
+  const category = categories.find(c => c.id === id);
+  if (!category) {
+    throw createError("Category not found", 404, "CATEGORY_NOT_FOUND");
+  }
+  return category;
+};
+
+const validateName = (name, required = false) => {
+  if (required && (name === undefined || name === null)) {
+    throw createError(
+      "Name is required and must be a string",
+      400,
+      "INVALID_INPUT"
+    );
+  }
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || !name.trim()) {
+      throw createError(
+        "Name must be a non-empty string",
+        400,
+        "INVALID_INPUT"
+      );
+    }
+  }
+
+  return name?.trim();
+};
+
+const ensureUniqueName = (name, excludeId = null) => {
+  const exists = categories.find(
+    c =>
+      c.name.toLowerCase() === name.toLowerCase() &&
+      c.id !== excludeId
+  );
+
+  if (exists) {
+    throw createError(
+      "Category name already exists",
+      409,
+      "CATEGORY_CONFLICT"
+    );
+  }
+};
+
+/* ================== Controllers ================== */
+
 // GET /categories
 exports.getAllCategories = (req, res) => {
   res.json(categories);
@@ -8,129 +65,83 @@ exports.getAllCategories = (req, res) => {
 
 // GET /categories/:id
 exports.getCategoryById = (req, res, next) => {
-  const id = parseInt(req.params.id);
-  const category = categories.find(c => c.id === id);
-
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
+  try {
+    const id = Number(req.params.id);
+    const category = getCategoryOrThrow(id);
+    res.json(category);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(category);
 };
 
 // POST /categories
 exports.createCategory = (req, res, next) => {
-  const { name } = req.body;
+  try {
+    const name = validateName(req.body.name, true);
+    ensureUniqueName(name);
 
-  if (!name || typeof name !== "string") {
-    const error = new Error("Name is required and must be a string");
-    error.status = 400;
-    error.code = "INVALID_INPUT";
-    return next(error);
+    const newCategory = {
+      id: currentCategoryId++,
+      name
+    };
+
+    categories.push(newCategory);
+    res.status(201).json(newCategory);
+  } catch (err) {
+    next(err);
   }
-
-  const exists = categories.find(
-    c => c.name.toLowerCase() === name.toLowerCase()
-  );
-
-  if (exists) {
-    const error = new Error("Category name already exists");
-    error.status = 409;
-    error.code = "CATEGORY_CONFLICT";
-    return next(error);
-  }
-
-  const newCategory = {
-    id: currentCategoryId++,
-    name
-  };
-
-  categories.push(newCategory);
-
-  res.status(201).json(newCategory);
 };
 
 // PATCH /categories/:id
 exports.updateCategory = (req, res, next) => {
-  const id = parseInt(req.params.id);
-  const category = categories.find(c => c.id === id);
+  try {
+    const id = Number(req.params.id);
+    const category = getCategoryOrThrow(id);
 
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
-  }
+    const name = validateName(req.body.name);
 
-  if (req.body.name !== undefined && typeof req.body.name !== "string") {
-    const error = new Error("Name must be a string");
-    error.status = 400;
-    error.code = "INVALID_INPUT";
-    return next(error);
-  }
-
-  if (req.body.name !== undefined) {
-    const exists = categories.find(
-      c =>
-        c.name.toLowerCase() === req.body.name.toLowerCase() &&
-        c.id !== category.id
-    );
-
-    if (exists) {
-      const error = new Error("Category name already exists");
-      error.status = 409;
-      error.code = "CATEGORY_CONFLICT";
-      return next(error);
+    if (name !== undefined) {
+      ensureUniqueName(name, category.id);
+      category.name = name;
     }
 
-    category.name = req.body.name;
+    res.json(category);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(category);
 };
 
 // DELETE /categories/:id
 exports.deleteCategory = (req, res, next) => {
-  const id = parseInt(req.params.id);
-  const index = categories.findIndex(c => c.id === id);
+  try {
+    const id = Number(req.params.id);
+    getCategoryOrThrow(id);
 
-  if (index === -1) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
+    categories = categories.filter(c => c.id !== id);
+
+    res.json({ message: "Category deleted" });
+  } catch (err) {
+    next(err);
   }
-
-  categories.splice(index, 1);
-
-  res.json({ message: "Category deleted" });
 };
 
-// Nested: GET /categories/:categoryid/posts
+// GET /categories/:categoryid/posts
 exports.getPostsByCategory = (req, res, next) => {
-  const categoryId = parseInt(req.params.categoryid);
-
-  const category = categories.find(c => c.id === categoryId);
-
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
-  }
-
   try {
-    const postsController = require("./postsController");
-    const posts = postsController.posts || [];
-    const filteredPosts = posts.filter(
-      p => p.categoryId === categoryId
-    );
+    const categoryId = Number(req.params.categoryid);
+    getCategoryOrThrow(categoryId);
 
-    res.json(filteredPosts);
-  } catch  {
-    res.json([]); // if postsController doesn't exist yet
+    let posts = [];
+
+    try {
+      const postsController = require("./postsController");
+      posts = postsController.posts || [];
+    } catch {
+      return res.json([]);
+    }
+
+    res.json(posts.filter(p => p.categoryId === categoryId));
+  } catch (err) {
+    next(err);
   }
 };

@@ -78,7 +78,7 @@ exports.updatePost = (req, res, next) => {
   const post = posts.find(p => p.id === parseInt(req.params.id));
 
   if (!post) {
-    const error = new Error("Post not found");
+    const error = new Error(`Post with id '${req.params.id}' was not found`);
     error.status = 404;
     error.code = "POST_NOT_FOUND";
     return next(error);
@@ -88,7 +88,7 @@ exports.updatePost = (req, res, next) => {
 
   // 🔴 400 — invalid types
   if (title !== undefined && typeof title !== "string") {
-    const error = new Error("Title must be a string");
+    const error = new Error("Title is required and must be a non empty string");
     error.status = 400;
     error.code = "INVALID_INPUT";
     return next(error);
