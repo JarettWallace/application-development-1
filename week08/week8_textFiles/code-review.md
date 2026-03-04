@@ -4,7 +4,7 @@
 2 My duplicated logic shows up mainly in three areas "not found" error handling, repeating ID parsing using parseInt(req.params...) that shows up on nearly every route, and repeated string validation checks for fields such as title, content, and name.
 
 
-3 I still haven't done my refactoring yet but I plan on improving the wording of the error messages, other than that I feel like all my file names and other titles are sufficient enough to get the point across of what they do and that they don't need to be updated.
+3 the biggest naming improvments I made was in categoriescontroller where I gave the helper functions added clear descriptive names such as validateName and createError, this makes it so their purpose is immeditaely clear and helps make my code more readable overall
 
 
 4 Most of the documentation that was missing was added in through this such as the readme explaining the purpose and the way to start the server alongside how to start lint.
