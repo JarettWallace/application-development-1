@@ -14,3 +14,39 @@
 | POST   | /posts                   | Create a new post                          |
 | PATCH  | /posts/{postId}          | Update specific fields of an existing post |
 | DELETE | /posts/{postId}          | Delete a post                              |
+
+4: successful post request 
+
+POST /categories
+Content-Type: application/json
+
+{
+  "name": "Technology"
+} 
+would return:
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Technology"
+}
+
+validation error: 
+
+POST /categories
+Content-Type: application/json
+
+{
+  "name": 123
+}
+would return:
+
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "status": 400,
+  "code": "INVALID_INPUT",
+  "message": "Name is required and must be a string"
+}
