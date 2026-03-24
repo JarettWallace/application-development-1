@@ -1,20 +1,22 @@
 const express = require("express");
 const postsRoutes = require("./routes/postsRoutes");
 const categoriesRoutes = require("./routes/categoriesRoutes");
+const tasksRoutes = require("./routes/tasks");
 const logger = require("./middleware/logger");
 
 const app = express();
 const PORT = 3000;
 
-// 1️ JSON parsing
+// Parse JSON bodies
 app.use(express.json());
 
-// 2 Global logger
+// Global logger middleware
 app.use(logger);
 
 // Routes
 app.use("/posts", postsRoutes);
 app.use("/categories", categoriesRoutes);
+app.use("/tasks", tasksRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
@@ -28,6 +30,7 @@ app.use((req, res, next) => {
 const errorHandler = require("./middleware/errorHandler");
 app.use(errorHandler);
 
+// Start server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
