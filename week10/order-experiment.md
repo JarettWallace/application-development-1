@@ -1,0 +1,1 @@
+I moved the requestTimer.js file into the routes folder, this made it so since I did not update or change the require() path it could not locate the module causing a module not found error which prevented the server from starting 
