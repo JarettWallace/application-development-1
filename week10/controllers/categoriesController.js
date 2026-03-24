@@ -1,28 +1,40 @@
-let categories = [];
-let currentCategoryId = 1;
+const pool = require("../db");
 
 // GET /categories
-exports.getAllCategories = (req, res) => {
-  res.json(categories);
+exports.getAllCategories = async (req, res, next) => {
+  try {
+    const [rows] = await pool.query("SELECT * FROM categories");
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
 };
 
 // GET /categories/:id
-exports.getCategoryById = (req, res, next) => {
+exports.getCategoryById = async (req, res, next) => {
   const id = parseInt(req.params.id);
-  const category = categories.find(c => c.id === id);
 
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM categories WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      const error = new Error("Category not found");
+      error.status = 404;
+      error.code = "CATEGORY_NOT_FOUND";
+      return next(error);
+    }
+
+    res.json(rows[0]);
+  } catch (err) {
+    next(err);
   }
-
-  res.json(category);
 };
 
 // POST /categories
-exports.createCategory = (req, res, next) => {
+exports.createCategory = async (req, res, next) => {
   const { name } = req.body;
 
   if (!name || typeof name !== "string") {
@@ -32,105 +44,136 @@ exports.createCategory = (req, res, next) => {
     return next(error);
   }
 
-  const exists = categories.find(
-    c => c.name.toLowerCase() === name.toLowerCase()
-  );
-
-  if (exists) {
-    const error = new Error("Category name already exists");
-    error.status = 409;
-    error.code = "CATEGORY_CONFLICT";
-    return next(error);
-  }
-
-  const newCategory = {
-    id: currentCategoryId++,
-    name
-  };
-
-  categories.push(newCategory);
-
-  res.status(201).json(newCategory);
-};
-
-// PATCH /categories/:id
-exports.updateCategory = (req, res, next) => {
-  const id = parseInt(req.params.id);
-  const category = categories.find(c => c.id === id);
-
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
-  }
-
-  if (req.body.name !== undefined && typeof req.body.name !== "string") {
-    const error = new Error("Name must be a string");
-    error.status = 400;
-    error.code = "INVALID_INPUT";
-    return next(error);
-  }
-
-  if (req.body.name !== undefined) {
-    const exists = categories.find(
-      c =>
-        c.name.toLowerCase() === req.body.name.toLowerCase() &&
-        c.id !== category.id
+  try {
+    // Check for duplicate name
+    const [existing] = await pool.query(
+      "SELECT * FROM categories WHERE LOWER(name) = LOWER(?)",
+      [name]
     );
 
-    if (exists) {
+    if (existing.length > 0) {
       const error = new Error("Category name already exists");
       error.status = 409;
       error.code = "CATEGORY_CONFLICT";
       return next(error);
     }
 
-    category.name = req.body.name;
-  }
+    const [result] = await pool.query(
+      "INSERT INTO categories (name) VALUES (?)",
+      [name]
+    );
 
-  res.json(category);
+    res.status(201).json({
+      id: result.insertId,
+      name
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PATCH /categories/:id
+exports.updateCategory = async (req, res, next) => {
+  const id = parseInt(req.params.id);
+  const { name } = req.body;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT * FROM categories WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      const error = new Error("Category not found");
+      error.status = 404;
+      error.code = "CATEGORY_NOT_FOUND";
+      return next(error);
+    }
+
+    if (name !== undefined) {
+      if (typeof name !== "string") {
+        const error = new Error("Name must be a string");
+        error.status = 400;
+        error.code = "INVALID_INPUT";
+        return next(error);
+      }
+
+      const [existing] = await pool.query(
+        "SELECT * FROM categories WHERE LOWER(name) = LOWER(?) AND id != ?",
+        [name, id]
+      );
+
+      if (existing.length > 0) {
+        const error = new Error("Category name already exists");
+        error.status = 409;
+        error.code = "CATEGORY_CONFLICT";
+        return next(error);
+      }
+
+      await pool.query(
+        "UPDATE categories SET name = ? WHERE id = ?",
+        [name, id]
+      );
+    }
+
+    const [updated] = await pool.query(
+      "SELECT * FROM categories WHERE id = ?",
+      [id]
+    );
+
+    res.json(updated[0]);
+  } catch (err) {
+    next(err);
+  }
 };
 
 // DELETE /categories/:id
-exports.deleteCategory = (req, res, next) => {
+exports.deleteCategory = async (req, res, next) => {
   const id = parseInt(req.params.id);
-  const index = categories.findIndex(c => c.id === id);
-
-  if (index === -1) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
-  }
-
-  categories.splice(index, 1);
-
-  res.json({ message: "Category deleted" });
-};
-
-// Nested: GET /categories/:categoryid/posts
-exports.getPostsByCategory = (req, res, next) => {
-  const categoryId = parseInt(req.params.categoryid);
-
-  const category = categories.find(c => c.id === categoryId);
-
-  if (!category) {
-    const error = new Error("Category not found");
-    error.status = 404;
-    error.code = "CATEGORY_NOT_FOUND";
-    return next(error);
-  }
 
   try {
-    const postsController = require("./postsController");
-    const posts = postsController.posts || [];
-    const filteredPosts = posts.filter(
-      p => p.categoryId === categoryId
+    const [result] = await pool.query(
+      "DELETE FROM categories WHERE id = ?",
+      [id]
     );
 
-    res.json(filteredPosts);
+    if (result.affectedRows === 0) {
+      const error = new Error("Category not found");
+      error.status = 404;
+      error.code = "CATEGORY_NOT_FOUND";
+      return next(error);
+    }
+
+    res.json({ message: "Category deleted" });
   } catch (err) {
-    res.json([]); // if postsController doesn't exist yet
+    next(err);
+  }
+};
+
+// GET /categories/:categoryid/posts
+exports.getPostsByCategory = async (req, res, next) => {
+  const categoryId = parseInt(req.params.categoryid);
+
+  try {
+    const [category] = await pool.query(
+      "SELECT * FROM categories WHERE id = ?",
+      [categoryId]
+    );
+
+    if (category.length === 0) {
+      const error = new Error("Category not found");
+      error.status = 404;
+      error.code = "CATEGORY_NOT_FOUND";
+      return next(error);
+    }
+
+    const [posts] = await pool.query(
+      "SELECT * FROM posts WHERE category_id = ?",
+      [categoryId]
+    );
+
+    res.json(posts);
+  } catch (err) {
+    next(err);
   }
 };
